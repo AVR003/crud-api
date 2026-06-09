@@ -5,6 +5,9 @@ use axum::{
     Json,
 };
 
+use axum::http::Method;
+use tower_http::cors::{Any, CorsLayer};
+
 use sqlx::PgPool;
 
 use serde::{Serialize, Deserialize};
@@ -109,6 +112,13 @@ async fn main() {
         db: pool,
     };
 
+
+    let cors = CorsLayer::new()
+    .allow_origin(Any)
+    .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+    .allow_headers(Any);
+
+
     let app = Router::new()
         .route("/health", get(health))
         .route("/", get(hello))
@@ -116,8 +126,9 @@ async fn main() {
         .route("/students", post(create_student))
         .route("/students/{id}", put(update_student))
         .route("/students/{id}", delete(delete_student))
-        .with_state(state);
-    
+        .with_state(state)
+        .layer(cors);
+        
     let port = std::env::var("PORT").unwrap_or_else(|_| "3000".to_string());
     let addr = format!("0.0.0.0:{}", port);
 
